@@ -1,0 +1,114 @@
+get: asking for information. 
+post: submitting information
+put: to update something
+delete: to delete something
+
+req: incoming data from a user's browser to the server. 
+res: outgoing data from the server back to the user's browser. 
+
+import static spark.Spark.*;
+
+public class HelloWorld {
+    public static void main(String[] args) {
+        // Define a route that responds to GET requests at the path "/hello"
+        get("/hello", (req, res) -> "Hello World");
+    }
+}
+
+req-request and res-response
+
+The get method allows you to specify what should happen when a GET request is made to a particular path.
+
+Handling Different HTTP Methods:
+    post("/path", (req, res) -> { /* handler logic */ }): Defines a route for handling HTTP POST requests.
+    put("/path", (req, res) -> { /* handler logic */ }): Defines a route for handling HTTP PUT requests.
+    delete("/path", (req, res) -> { /* handler logic */ }): Defines a route for handling HTTP DELETE requests.
+
+Path Parameters:
+    get("/hello/:name", (req, res) -> "Hello " + req.params(":name")): Uses a path parameter (:name) to capture values from the URL.
+
+Query Parameters:
+    get("/query", (req, res) -> "Query param: " + req.queryParams("paramName")): Retrieves query parameters from the request.
+
+Route Filters:
+    before("/path", (req, res) -> { /* filter logic executed before route */ }): Defines a filter that is executed before a route.
+    after("/path", (req, res) -> { /* filter logic executed after route */ }): Defines a filter that is executed after a route.
+
+Redirects:
+    redirect.get("/oldPath", "/newPath");: Redirects requests from one path to another.
+
+---
+
+get("/stop", (req, res) -> {
+    halt(403, "Access forbidden");
+    return null;
+});
+
+get("/go-to-google", (req, res) -> {
+    redirect("http://www.google.com");
+    return null;
+});
+
+File Upload:
+post("/upload", "multipart/form-data", (req, res) -> {
+    Part uploadedFile = req.raw().getPart("file");
+    // Process the uploaded file
+    return "File uploaded successfully";
+});
+-> Exp:
+    req: This is like a messenger that brings information about a request made to a website.
+    req.raw(): This is like looking at the inside details of that message, specifically the raw, underlying information.
+    getPart("file"): This is like finding a specific part or attachment in that message. In this case, we're looking for something named "file."
+    So, the entire line is saying: "Look inside the details of the request, find the part named 'file,' and consider it as 'uploadedFile.'"
+    After this line, you can do things with the uploadedFile, like checking its contents or saving it somewhere.
+    In this context, "multipart/form-data" is telling the server that the incoming request may contain multiple parts, including files, and it should be processed accordingly.    
+
+---
+
+post("/login", (req, res) -> {
+            String username = req.queryParams("username");
+            String password = req.queryParams("password");
+
+            // Basic authentication check (replace with real authentication logic)
+            if ("user1".equals(username) && "pass123".equals(password)) {
+                // Set a session attribute for authentication
+                req.session(true).attribute("username", username);
+                res.redirect("/dashboard");
+            } else {
+                res.redirect("/login?error=1");
+            }
+            return null;
+        });
+
+
+req.queryParams("username"): is used to get the value of the "username" parameter from the URL when a user is trying to log in. It assumes that the user submits their username as a part of the URL when making a login request.
+username=johndoe&password=secure123", req.queryParams("username") would return the string "johndoe". 
+req.session(true).attribute("username", username): 
+    req.session(true): It creates or gets a session associated with the current user.
+    .attribute("username", username): It stores the user's username in that session.
+res.redirect("/dashboard"): "redirect" is a way to tell the browser to go to a different page or URL. In this case, it's directing the user to the "/dashboard" page.
+
+return null: This line is there to complete the lambda function. It's returning null because the function doesn't need to explicitly return anything.
+
+before("/dashboard", (req, res) -> {
+            // Check if the user is authenticated (simple check for demonstration)
+            if (req.session().attribute("username") == null) {
+                res.redirect("/login");
+                halt(); // Stop further processing
+            }
+        });
+
+This code ensures that, before accessing the "/dashboard" page, it checks if the user is authenticated (logged in). 
+If not, it redirects the user to the login page and stops any further processing. 
+halt();: This line stops further processing. Once halt() is called, the filter stops execution, and the request does not proceed to the "/dashboard" endpoint.
+
+
+exception(NotFoundException.class, (e, req, res) -> {
+    res.status(404);
+    res.body("404 Not Found");
+});
+
+exception(NotFoundException.class, (e, req, res) -> {: This line is saying, "If a NotFoundException happens during processing, do the following..."
+res.status(404);: It sets the HTTP response status code to 404, which means "Not Found." This is the standard code for indicating that the requested resource could not be found on the server.
+res.body("404 Not Found");: It sets the response body to "404 Not Found." This is the content that will be sent back to the client as part of the response. It's a simple message indicating that the requested resource was not found.
+
